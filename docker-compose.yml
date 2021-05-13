@@ -1,7 +1,17 @@
 version: '3.8'
 
 services:
+  cups:
+    build: ./cupsserver
+    ports:
+      - 8080:631
+    volumes:
+      - ./cupsserver:/home/print
+      - /var/run/dbus:/var/run/dbus
+    command: /usr/sbin/cupsd -f
   web:
+    depends_on:
+      - cups
     build: ./webserver
     volumes:
       - ./webserver:/server

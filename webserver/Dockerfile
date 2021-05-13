@@ -8,4 +8,3 @@ ADD ./requirements.txt /server/
 RUN pip3 install -r requirements.txt
 ADD ./ /server
 ENV FLASK_ENV development
-RUN apt-get -y install cups
