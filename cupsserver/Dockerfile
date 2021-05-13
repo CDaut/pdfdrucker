@@ -36,8 +36,7 @@ RUN /usr/sbin/cupsd \
 # Patch the default configuration file to only enable encryption if requested
 RUN sed -e '0,/^</s//DefaultEncryption IfRequested\n&/' -i /etc/cups/cupsd.conf
 
-# Default shell
-#CMD ["/usr/sbin/cupsd", "-f"]
+#ADD ./addprinter.sh /home/print/addprinter.sh
 
 #install the printer
-#RUN lpadmin -p ABH -E -v smb://print.abh.uni-karlsruhe.de/abh-netzwerkdrucker -P CD1242.PPD
+#CMD /home/print/addprinter.sh

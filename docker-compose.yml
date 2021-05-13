@@ -8,7 +8,7 @@ services:
     volumes:
       - ./cupsserver:/home/print
       - /var/run/dbus:/var/run/dbus
-    command: /usr/sbin/cupsd -f
+    command: bash -c "/usr/sbin/cupsd && /home/print/addprinter.sh && tail -F YOU_CAN_IGNORE_THIS_ERROR"
   web:
     depends_on:
       - cups
