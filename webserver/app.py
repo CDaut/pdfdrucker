@@ -23,36 +23,66 @@ def setup():
             exit("Unable to load config: " + str(error))
 
 
+def validate_pdf(uploaded_file):
+    secured_filename = secure_filename(uploaded_file.filename)
+
+    if secured_filename == '':
+        return 'Bitte laden sie eine Datei hoch.'
+
+    # check extension
+    if os.path.splitext(secured_filename)[1] != '.pdf':
+        return 'Sie können nur PDF Dateien drucken.'
+
+    # check if file is really a pdf
+    try:
+        pdfreader = PdfFileReader(uploaded_file)
+    except PdfReadError:
+        return 'Die PDF Datei kann nicht gelesen werden.'
+
+    # check the number of pages
+    if pdfreader.numPages > int(CONFIG['maxpdfsize']):
+        return 'Sie können nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seiten drucken.'
+
+    return 'ISVALID'
+
+
+def validate_user(formdata):
+    username = formdata['username']
+    password = formdata['password']
+
+    if username == '' or password == '':
+        return 'Ungültiger Nutzername und/oder ungültiges Passwort.'
+
+    # TODO: Validate the user data against the DB
+
+    return 'ISVALID'
+
+
 def handle_get():
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'])
 
 
 def handle_post():
+    # validate the user data
+    is_valid = validate_user(request.form)
+
+    if is_valid != 'ISVALID':
+        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=is_valid)
+
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
-    secured_filename = secure_filename(uploaded_file.filename)
 
-    # check extension
-    if os.path.splitext(secured_filename)[1] != '.pdf':
-        return render_template('index.html',
-                               maxpdfsize=CONFIG['maxpdfsize'],
-                               error='Sie können nur PDF Dateien drucken.')
+    # call the helper method to validate the pdf
+    valid = validate_pdf(uploaded_file)
+    if not valid == 'ISVALID':
+        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=valid)
 
-    # check if file is really a pdf
-    try:
-        pdfreader = PdfFileReader(uploaded_file)
-    except PdfReadError as error:
-        return render_template('index.html',
-                               maxpdfsize=CONFIG['maxpdfsize'],
-                               error='Die PDF Datei kann nicht gelesen werden.')
+    # at this point we know that the uploaded file is a valid pdf file
 
-    # check the number of pages
-    if pdfreader.numPages > int(CONFIG['maxpdfsize']):
-        return render_template('index.html',
-                               maxpdfsize=CONFIG['maxpdfsize'],
-                               error='Sie können nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seitem drucken.')
-
-    return handle_get()
+    return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
+                           success='Ihre Datei wird nun in ihren persönlichen Druckaccount hochgeladen. '
+                                   + 'Bitte beachten sie, dass das Verarbeiten von großen '
+                                   + 'PDFs unter Umständen mehrere Minuten dauern kann.')
 
 
 @app.route("/", methods=['GET', 'POST'])
