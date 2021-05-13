@@ -1,2 +1,3 @@
 maxpdfsize: 250
-upload_directory: /home/print/
+spooler_directory: ./ #/tmp/printjobs/
+temporary_storage: /tmp/allpdfs

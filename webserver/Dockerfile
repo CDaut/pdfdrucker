@@ -7,4 +7,7 @@ WORKDIR /server
 ADD ./requirements.txt /server/
 RUN pip3 install -r requirements.txt
 ADD ./ /server
+RUN mkdir /tmp/printjobs/
+RUN mkdir /tmp/allpdfs/
+RUN apt install -y cups cups-client
 ENV FLASK_ENV development

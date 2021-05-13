@@ -1,4 +1,8 @@
 import os.path
+import socket
+from os.path import join
+import time
+from shutil import move
 
 from flask import Flask, render_template, request
 from werkzeug.utils import secure_filename
@@ -72,12 +76,36 @@ def handle_post():
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
 
+    # save the file temporarily because PDFLoader might break it
+    unixtime = int(time.time())
+    username = request.form['username']
+    temppath = CONFIG['temporary_storage']
+    filename = join(temppath, username + '_' + str(unixtime) + '.pdf')
+
+    # save the file
+    uploaded_file.save(filename)
+
     # call the helper method to validate the pdf
     valid = validate_pdf(uploaded_file)
+
     if not valid == 'ISVALID':
+        # remove file from tempdir
+        os.remove(filename)
+
         return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=valid)
 
     # at this point we know that the uploaded file is a valid pdf file
+
+    # move uploaded pdffile to our print spooler
+    spooler_dir = CONFIG['spooler_directory']
+    newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
+    move(filename, newpath)
+
+    # get cups server hostname
+    hostname = socket.gethostbyname('cups')
+
+    # call lp TODO: do not call lp here or dispatch thread ore something like that
+    os.system('lp -h ' + hostname + ':631 -d ABH ' + newpath)
 
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
                            success='Ihre Datei wird nun in ihren persönlichen Druckaccount hochgeladen. '
