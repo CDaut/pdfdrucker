@@ -5,10 +5,9 @@ import time
 from shutil import move
 
 from flask import Flask, render_template, request
-from werkzeug.utils import secure_filename
 from yaml import YAMLError, safe_load
-from PyPDF2 import PdfFileReader
-from PyPDF2.utils import PdfReadError
+
+from validation import validate_pdf, validate_user
 
 app = Flask(__name__)
 
@@ -25,41 +24,6 @@ def setup():
             CONFIG = safe_load(configfile)
         except YAMLError as error:
             exit("Unable to load config: " + str(error))
-
-
-def validate_pdf(uploaded_file):
-    secured_filename = secure_filename(uploaded_file.filename)
-
-    if secured_filename == '':
-        return 'Bitte laden sie eine Datei hoch.'
-
-    # check extension
-    if os.path.splitext(secured_filename)[1] != '.pdf':
-        return 'Sie können nur PDF Dateien drucken.'
-
-    # check if file is really a pdf
-    try:
-        pdfreader = PdfFileReader(uploaded_file)
-    except PdfReadError:
-        return 'Die PDF Datei kann nicht gelesen werden.'
-
-    # check the number of pages
-    if pdfreader.numPages > int(CONFIG['maxpdfsize']):
-        return 'Sie können nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seiten drucken.'
-
-    return 'ISVALID'
-
-
-def validate_user(formdata):
-    username = formdata['username']
-    password = formdata['password']
-
-    if username == '' or password == '':
-        return 'Ungültiger Nutzername und/oder ungültiges Passwort.'
-
-    # TODO: Validate the user data against the DB
-
-    return 'ISVALID'
 
 
 def handle_get():
@@ -86,7 +50,7 @@ def handle_post():
     uploaded_file.save(filename)
 
     # call the helper method to validate the pdf
-    valid = validate_pdf(uploaded_file)
+    valid = validate_pdf(uploaded_file, CONFIG)
 
     if not valid == 'ISVALID':
         # remove file from tempdir
