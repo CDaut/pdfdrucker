@@ -8,10 +8,13 @@ from flask import Flask, render_template, request
 from yaml import YAMLError, safe_load
 
 from validation import validate_pdf, validate_user
+from printqueue import Printerthread
+from printjobs import Printjob
 
 app = Flask(__name__)
 
 global CONFIG
+global PRINTERTHREAD
 
 
 @app.before_first_request
@@ -24,6 +27,12 @@ def setup():
             CONFIG = safe_load(configfile)
         except YAMLError as error:
             exit("Unable to load config: " + str(error))
+
+    # generate, assign and dispatch a new printer thread
+    global PRINTERTHREAD
+    PRINTERTHREAD = Printerthread()
+    PRINTERTHREAD.start()
+    print("Dispatched printer Thread.")
 
 
 def handle_get():
@@ -65,11 +74,9 @@ def handle_post():
     newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
     move(filename, newpath)
 
-    # get cups server hostname
-    hostname = socket.gethostbyname('cups')
-
-    # call lp TODO: do not call lp here or dispatch thread ore something like that
-    os.system('lp -h ' + hostname + ':631 -d ABH ' + newpath)
+    # create a new printjob and enqueue it
+    job = Printjob(username, newpath)
+    PRINTERTHREAD.enqueue(job)
 
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
                            success='Ihre Datei wird nun in ihren persönlichen Druckaccount hochgeladen. '
