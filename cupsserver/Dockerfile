@@ -35,8 +35,3 @@ RUN /usr/sbin/cupsd \
 
 # Patch the default configuration file to only enable encryption if requested
 RUN sed -e '0,/^</s//DefaultEncryption IfRequested\n&/' -i /etc/cups/cupsd.conf
-
-#ADD ./addprinter.sh /home/print/addprinter.sh
-
-#install the printer
-#CMD /home/print/addprinter.sh

@@ -11,3 +11,5 @@ RUN mkdir /tmp/printjobs/
 RUN mkdir /tmp/allpdfs/
 RUN apt install -y cups cups-client
 ENV FLASK_ENV development
+
+RUN echo "ServerName cups:631" > /etc/cups/client.conf
