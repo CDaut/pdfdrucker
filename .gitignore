@@ -339,3 +339,6 @@ tags
 
 # test pdfs
 *.pdf
+
+# secrets file
+webserver/secrets.yml
