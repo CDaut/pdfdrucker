@@ -14,6 +14,7 @@ from printjobs import Printjob
 app = Flask(__name__)
 
 global CONFIG
+global SECRETS
 global PRINTERTHREAD
 global logger
 
@@ -28,6 +29,15 @@ def setup():
             CONFIG = safe_load(configfile)
         except YAMLError as error:
             exit("Unable to load config: " + str(error))
+
+    # try to load the secrets file
+    with open('secrets.yml', 'r') as secretsfile:
+        try:
+            # load the config
+            global SECRETS
+            SECRETS = safe_load(secretsfile)
+        except YAMLError as error:
+            exit("Unable to load secrets.yml: " + str(error))
 
     # generate, assign and dispatch a new printer thread
     global PRINTERTHREAD
@@ -45,7 +55,7 @@ def handle_get():
 
 def handle_post():
     # validate the user data
-    is_valid = validate_user(request.form)
+    is_valid = validate_user(request.form, CONFIG, SECRETS)
 
     if is_valid != 'ISVALID':
         return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=is_valid)

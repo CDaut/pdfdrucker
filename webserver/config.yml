@@ -3,3 +3,5 @@ spooler_directory: /tmp/printjobs/
 temporary_storage: /tmp/allpdfs
 status_fetch_sleep_interval: 5
 check_for_new_job_interval: 2.0
+db_address: abh-storage.abh.uni-karlsruhe.de
+db_name: whadmin2
