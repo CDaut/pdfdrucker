@@ -19,20 +19,26 @@ class Printerthread(Thread):
             if len(self.__queue) == 0:
                 time.sleep(5.0)
             else:
-                printjob = self.get_first_job()
-                print("Print job recieved. Name: " + printjob.pdfpath + ", user: " + printjob.username)
+                self.handle_print_job()
 
-                # dispatch print job
-                # get cups server hostname
-                hostname = socket.gethostbyname('cups')
-                # call lp
-                from_stdout = str(subprocess.check_output('lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath,
-                                                          shell=True))
-                # extract the real printjob id
-                jobid = re.search('ABH-[0-9]+', from_stdout).group(0)
+    def handle_print_job(self):
+        printjob = self.get_first_job()
+        print("Print job recieved. Name: " + printjob.pdfpath + ", user: " + printjob.username)
 
-                # update the printjobs jobid
-                printjob.jobid = jobid
+        # dispatch print job
+        # get cups server hostname
+        hostname = socket.gethostbyname('cups')
+        # call lp
+        from_stdout = str(subprocess.check_output('lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath,
+                                                  shell=True))
+        # extract the real printjob id
+        jobid = re.search('(ABH)(-[0-9]+)', from_stdout).group(2)
+        # update the printjobs jobid
+        printjob.jobid = jobid
+
+        while True:
+            printjob.fetch_status()
+            time.sleep(10)
 
     def enqueue(self, printjob):
         self.__queue.append(printjob)
