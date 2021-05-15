@@ -58,7 +58,9 @@ def handle_post():
     is_valid = validate_user(request.form, CONFIG, SECRETS)
 
     if is_valid != 'ISVALID':
-        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=is_valid)
+        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=is_valid,
+                               num_documents=PRINTERTHREAD.get_queue_size(),
+                               num_pages=PRINTERTHREAD.get_page_sum())
 
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
@@ -79,7 +81,9 @@ def handle_post():
         # remove file from tempdir
         os.remove(filename)
 
-        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=valid)
+        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=valid,
+                               num_documents=PRINTERTHREAD.get_queue_size(),
+                               num_pages=PRINTERTHREAD.get_page_sum())
 
     # at this point we know that the uploaded file is a valid pdf file
 
