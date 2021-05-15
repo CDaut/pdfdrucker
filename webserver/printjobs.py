@@ -1,11 +1,11 @@
 from bs4 import BeautifulSoup
-from enum import Enum
+from enum import Enum, auto
 
 
 class JobStatus(Enum):
-    COMPLETED = 0
-    FAILED = 1
-    PROCESSING = 2
+    COMPLETED = auto
+    FAILED = auto
+    PROCESSING = auto
 
 
 class Printjob:

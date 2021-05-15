@@ -79,7 +79,7 @@ def handle_post():
     PRINTERTHREAD.enqueue(job)
 
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
-                           success='Ihre Datei wird nun in ihren persönlichen Druckaccount hochgeladen. '
+                           success='Ihre Datei wird nun verarbeitet. '
                                    + 'Bitte beachten sie, dass das Verarbeiten von großen '
                                    + 'PDFs unter Umständen mehrere Minuten dauern kann.')
 

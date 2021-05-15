@@ -1,4 +1,3 @@
-import os
 import re
 import socket
 import subprocess
@@ -32,7 +31,7 @@ class Printerthread(Thread):
                 # extract the real printjob id
                 jobid = re.search('ABH-[0-9]+', from_stdout).group(0)
 
-                # update the printjob
+                # update the printjobs jobid
                 printjob.jobid = jobid
 
     def enqueue(self, printjob):
