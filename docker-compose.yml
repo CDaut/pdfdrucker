@@ -4,7 +4,7 @@ services:
   cups:
     build: ./cupsserver
     ports:
-      - 8080:631
+      - 631
     volumes:
       - ./cupsserver:/home/print
       - /var/run/dbus:/var/run/dbus
@@ -16,5 +16,5 @@ services:
     volumes:
       - ./webserver:/server
     ports:
-      - "8000:8000"
+      - 8007:8000
     command: flask run --host=0.0.0.0 --port=8000
