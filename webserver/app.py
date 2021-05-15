@@ -43,7 +43,7 @@ def setup():
     global PRINTERTHREAD
     PRINTERTHREAD = Printerthread(CONFIG, app.logger, SECRETS)
     PRINTERTHREAD.start()
-    print("Dispatched printer Thread.")
+    app.logger.info("Dispatched printer Thread.")
 
 
 def handle_get():
