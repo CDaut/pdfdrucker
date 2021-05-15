@@ -99,6 +99,11 @@ class Printerthread(Thread):
             self.__logger.error('More than two files are present. Aborting.')
             return
 
+        # failsafe to not shut down the printer thread if no file is found
+        if len(files) == 0:
+            self.__logger.error('No postscript file found. Aborting.')
+            return
+
         # move the file to the correct user directory
         postscript_file_path = os.path.join(pdf_printer_dir_path, files[0])
 
