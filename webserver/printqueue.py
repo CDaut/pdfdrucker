@@ -94,7 +94,7 @@ class Printerthread(Thread):
         # get files in remote directory
         files = sftp.listdir(pdf_printer_dir_path)
 
-        # throw an error if more than two files are present
+        # throw an error if more than one file is present
         if len(files) > 1:
             self.__logger.error('More than two files are present. Aborting.')
             return
@@ -103,6 +103,13 @@ class Printerthread(Thread):
         postscript_file_path = os.path.join(pdf_printer_dir_path, files[0])
 
         newpath = os.path.join('/home/sambashares/printjobs', printjob.username, files[0])
+
+        # check if userdir exists
+        userdirs = sftp.listdir('/home/sambashares/printjobs')
+
+        # create userdir if needed
+        if printjob.username not in userdirs:
+            sftp.mkdir(os.path.join('/home/sambashares/printjobs', printjob.username))
 
         # use rename to move the file
         sftp.rename(postscript_file_path, newpath)
