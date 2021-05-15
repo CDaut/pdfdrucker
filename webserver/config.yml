@@ -5,3 +5,5 @@ status_fetch_sleep_interval: 5
 check_for_new_job_interval: 2.0
 db_address: abh-storage.abh.uni-karlsruhe.de
 db_name: whadmin2
+sftp_address: print.abh.uni-karlsruhe.de
+remote_dir: /home/sambashares/printjobs

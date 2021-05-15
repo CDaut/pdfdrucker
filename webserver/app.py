@@ -41,7 +41,7 @@ def setup():
 
     # generate, assign and dispatch a new printer thread
     global PRINTERTHREAD
-    PRINTERTHREAD = Printerthread(CONFIG, app.logger)
+    PRINTERTHREAD = Printerthread(CONFIG, app.logger, SECRETS)
     PRINTERTHREAD.start()
     print("Dispatched printer Thread.")
 

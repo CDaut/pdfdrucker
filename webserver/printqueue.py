@@ -1,20 +1,25 @@
+import os
 import re
 import socket
 import subprocess
 import time
 from threading import Thread
 
+import paramiko
+from paramiko.sftp_client import SFTPClient
+
 from printjobs import JobStatus
 
 
 class Printerthread(Thread):
-    def __init__(self, config, logger):
+    def __init__(self, config, logger, secret):
         super().__init__()
         # make this a daemon thread
         self.daemon = True
         self.__queue = []
         self.__config = config
         self.__logger = logger
+        self.__secret = secret
 
     def run(self):
         # main printing loop
@@ -26,6 +31,25 @@ class Printerthread(Thread):
                 self.handle_print_job()
 
     def handle_print_job(self):
+
+        # connect to smb share and clear directory to ensure a clean starting state
+        # connect to remote server via sftp
+        transport = paramiko.Transport((self.__config['sftp_address'], 22))
+        transport.connect(None, self.__secret['username'], self.__secret['sftp_password'])
+
+        # create sftp connection
+        sftp = SFTPClient.from_transport(transport)
+
+        pdf_printer_dir_path = os.path.join(self.__config['remote_dir'], 'pdfprinter')
+
+        # list all files
+        files = sftp.listdir(pdf_printer_dir_path)
+
+        # delete all files
+        for file in files:
+            filepath = os.path.join(self.__config['remote_dir'], 'pdfprinter', file)
+            sftp.remove(filepath)
+
         printjob = self.get_first_job()
 
         # dispatch print job
@@ -67,7 +91,22 @@ class Printerthread(Thread):
             elif status is JobStatus.UNKNOWN:
                 self.__logger.error('Received unknown status code')
 
-        # TODO: do smb share processing and other important stuff here
+        # get files in remote directory
+        files = sftp.listdir(pdf_printer_dir_path)
+
+        # throw an error if more than two files are present
+        if len(files) > 1:
+            self.__logger.error('More than two files are present. Aborting.')
+            return
+
+        # move the file to the correct user directory
+        postscript_file_path = os.path.join(pdf_printer_dir_path, files[0])
+
+        newpath = os.path.join('/home/sambashares/printjobs', printjob.username, files[0])
+
+        # use rename to move the file
+        sftp.rename(postscript_file_path, newpath)
+        self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + 's printing queue.')
 
     def enqueue(self, printjob):
         self.__queue.append(printjob)
