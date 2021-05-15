@@ -1,17 +1,16 @@
-import re
 import socket
 
 from bs4 import BeautifulSoup
-from enum import Enum, auto
+from enum import Enum
 import requests
 
 
 class JobStatus(Enum):
-    COMPLETED = auto
-    FAILED = auto
-    PROCESSING = auto
-    PENDING = auto
-    UNKNOWN = auto
+    COMPLETED = 0
+    FAILED = 1
+    PROCESSING = 2
+    PENDING = 3
+    UNKNOWN = 4
 
 
 class Printjob:
@@ -20,6 +19,8 @@ class Printjob:
         self.username = username
         self.pdfpath = pdfpath
         self.numpages = pages
+        self.starttime = None
+        self.completetime = None
 
     '''
     Method to get the print jobs status by fetching the HTML from cups and parsing it
@@ -54,11 +55,16 @@ class Printjob:
             if int(jobid) == int(self.jobid):
                 state = row['state']
                 # extract the state information
-                rawstatus = state.text.split(" ")[0]
+                rawstatus = state.text.split(" ")[0].replace('\n', '')
 
                 if rawstatus == 'pending':
                     return JobStatus.PENDING
-                elif rawstatus ==
+                elif rawstatus == 'stopped':
+                    return JobStatus.FAILED
+                elif rawstatus == 'processing':
+                    return JobStatus.PROCESSING
+                else:
+                    return JobStatus.UNKNOWN
 
         # if the print job is not listed in the table anymnore, it can be marked as completed
         if not job_found:

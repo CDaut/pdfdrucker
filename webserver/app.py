@@ -81,6 +81,9 @@ def handle_post():
     job = Printjob(username, newpath, num_pages)
     PRINTERTHREAD.enqueue(job)
 
+    # create log message
+    app.logger.info('Received print job from user %s with %s pages', username, num_pages)
+
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
                            success='Ihre Datei wird nun verarbeitet. '
                                    + 'Bitte beachten sie, dass das Verarbeiten von großen '
