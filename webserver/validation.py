@@ -28,6 +28,10 @@ def validate_pdf(uploaded_file, CONFIG):
     return 'ISVALID'
 
 
+def get_number_of_pages(pdffile):
+    return PdfFileReader(pdffile).numPages
+
+
 def validate_user(formdata):
     username = formdata['username']
     password = formdata['password']

@@ -7,7 +7,7 @@ from shutil import move
 from flask import Flask, render_template, request
 from yaml import YAMLError, safe_load
 
-from validation import validate_pdf, validate_user
+from validation import validate_pdf, validate_user, get_number_of_pages
 from printqueue import Printerthread
 from printjobs import Printjob
 
@@ -15,6 +15,7 @@ app = Flask(__name__)
 
 global CONFIG
 global PRINTERTHREAD
+global logger
 
 
 @app.before_first_request
@@ -30,7 +31,7 @@ def setup():
 
     # generate, assign and dispatch a new printer thread
     global PRINTERTHREAD
-    PRINTERTHREAD = Printerthread()
+    PRINTERTHREAD = Printerthread(CONFIG, app.logger)
     PRINTERTHREAD.start()
     print("Dispatched printer Thread.")
 
@@ -69,13 +70,15 @@ def handle_post():
 
     # at this point we know that the uploaded file is a valid pdf file
 
+    num_pages = get_number_of_pages(uploaded_file)
+
     # move uploaded pdffile to our print spooler
     spooler_dir = CONFIG['spooler_directory']
     newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
     move(filename, newpath)
 
     # create a new printjob and enqueue it
-    job = Printjob(username, newpath)
+    job = Printjob(username, newpath, num_pages)
     PRINTERTHREAD.enqueue(job)
 
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
