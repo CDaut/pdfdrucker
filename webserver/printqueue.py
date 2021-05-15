@@ -74,3 +74,14 @@ class Printerthread(Thread):
 
     def get_first_job(self):
         return self.__queue.pop(0)
+
+    def get_queue_size(self):
+        return len(self.__queue)
+
+    def get_page_sum(self):
+        pages = 0
+
+        for printjob in self.__queue:
+            pages += printjob.numpages
+
+        return pages

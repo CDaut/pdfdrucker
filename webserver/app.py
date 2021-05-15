@@ -37,7 +37,10 @@ def setup():
 
 
 def handle_get():
-    return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'])
+    return render_template('index.html',
+                           maxpdfsize=CONFIG['maxpdfsize'],
+                           num_documents=PRINTERTHREAD.get_queue_size(),
+                           num_pages=PRINTERTHREAD.get_page_sum())
 
 
 def handle_post():
@@ -85,6 +88,8 @@ def handle_post():
     app.logger.info('Received print job from user %s with %s pages', username, num_pages)
 
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
+                           num_documents=PRINTERTHREAD.get_queue_size(),
+                           num_pages=PRINTERTHREAD.get_page_sum(),
                            success='Ihre Datei wird nun verarbeitet. '
                                    + 'Bitte beachten sie, dass das Verarbeiten von großen '
                                    + 'PDFs unter Umständen mehrere Minuten dauern kann.')
