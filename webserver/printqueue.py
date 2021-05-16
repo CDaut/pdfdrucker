@@ -115,7 +115,7 @@ class Printerthread(Thread):
         # create userdir if needed and set correct permissions
         if printjob.username not in userdirs:
             sftp.mkdir(os.path.join('/home/sambashares/printjobs', printjob.username))
-            sftp.chmod(os.path.join('/home/sambashares/printjobs', printjob.username), 777)
+            sftp.chmod(os.path.join('/home/sambashares/printjobs', printjob.username), 0o777)
 
         # use rename to move the file
         sftp.rename(postscript_file_path, newpath)
