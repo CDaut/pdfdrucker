@@ -1,5 +1,4 @@
 import os.path
-import socket
 from os.path import join
 import time
 from shutil import move
@@ -109,9 +108,36 @@ def handle_post():
                                    + 'PDFs unter Umständen mehrere Minuten dauern kann.')
 
 
+# main printing page
 @app.route("/", methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         return handle_post()
     else:
         return handle_get()
+
+
+# page for soft restarting the printer queue
+@app.route('/printerthread', methods=['GET', 'POST'])
+def printerthread():
+    # handle different methods differently
+    if request.method == 'GET':
+        return render_template('printerthread.html', running=PRINTERTHREAD.is_alive())
+    elif request.method == 'POST':
+        # check if the thread is already running so it cannot be started twice
+        if PRINTERTHREAD.is_alive():
+            return render_template('printerthread.html',
+                                   running=PRINTERTHREAD.is_alive(),
+                                   error='Daemon is already running.')
+        # check if the password is correct
+        if request.form['password'] != SECRETS['sftp_password']:
+            return render_template('printerthread.html',
+                                   running=PRINTERTHREAD.is_alive(),
+                                   error='Wrong password.')
+
+        # restart thread if the password was correct
+        else:
+            PRINTERTHREAD.start()
+            return render_template('printerthread.html',
+                                   running=PRINTERTHREAD.is_alive(),
+                                   success='Restarted printer thread.')
