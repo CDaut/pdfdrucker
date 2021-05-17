@@ -42,6 +42,12 @@ class Printerthread(Thread):
 
         pdf_printer_dir_path = os.path.join(self.__config['remote_dir'], 'pdfprinter')
 
+        # check if the remote printer dir even exists
+        if 'pdfprinter' not in sftp.listdir(self.__config['remote_dir']):
+            # create remote directory and set permissions
+            sftp.mkdir(pdf_printer_dir_path)
+            sftp.chmod(pdf_printer_dir_path, 0o777)
+
         # list all files
         files = sftp.listdir(pdf_printer_dir_path)
 
