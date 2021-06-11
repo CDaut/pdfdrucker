@@ -7,3 +7,4 @@ db_address: abh-storage.abh.uni-karlsruhe.de
 db_name: whadmin2
 sftp_address: print.abh.uni-karlsruhe.de
 remote_dir: /home/sambashares/printjobs
+version: 1.0.2

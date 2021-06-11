@@ -49,7 +49,8 @@ def handle_get():
     return render_template('index.html',
                            maxpdfsize=CONFIG['maxpdfsize'],
                            num_documents=PRINTERTHREAD.get_queue_size(),
-                           num_pages=PRINTERTHREAD.get_page_sum())
+                           num_pages=PRINTERTHREAD.get_page_sum(),
+                           version=CONFIG['version'])
 
 
 def handle_post():
@@ -57,9 +58,13 @@ def handle_post():
     is_valid = validate_user(request.form, CONFIG, SECRETS)
 
     if is_valid != 'ISVALID':
-        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=is_valid,
-                               num_documents=PRINTERTHREAD.get_queue_size(),
-                               num_pages=PRINTERTHREAD.get_page_sum())
+        return render_template(
+            'index.html',
+            maxpdfsize=CONFIG['maxpdfsize'],
+            error=is_valid,
+            num_documents=PRINTERTHREAD.get_queue_size(),
+            num_pages=PRINTERTHREAD.get_page_sum(),
+            version=CONFIG['version'])
 
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
@@ -80,9 +85,13 @@ def handle_post():
         # remove file from tempdir
         os.remove(filename)
 
-        return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'], error=valid,
-                               num_documents=PRINTERTHREAD.get_queue_size(),
-                               num_pages=PRINTERTHREAD.get_page_sum())
+        return render_template(
+            'index.html',
+            maxpdfsize=CONFIG['maxpdfsize'],
+            error=valid,
+            num_documents=PRINTERTHREAD.get_queue_size(),
+            num_pages=PRINTERTHREAD.get_page_sum(),
+            version=CONFIG['version'])
 
     # at this point we know that the uploaded file is a valid pdf file
 
@@ -105,7 +114,8 @@ def handle_post():
                            num_pages=PRINTERTHREAD.get_page_sum(),
                            success='Deine Datei wird nun verarbeitet. '
                                    + 'Bitte beachte, dass das Verarbeiten von großen '
-                                   + 'PDFs unter Umständen mehrere Minuten dauern kann.')
+                                   + 'PDFs unter Umständen mehrere Minuten dauern kann.',
+                           version=CONFIG['version'])
 
 
 # main printing page
