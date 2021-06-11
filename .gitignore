@@ -342,3 +342,6 @@ tags
 
 # secrets file
 webserver/secrets.yml
+
+# web container dump
+web_log.txt
