@@ -146,4 +146,4 @@ def printerqueue():
                 numjobs=PRINTERTHREAD.get_queue_size(),
                 numpages=PRINTERTHREAD.get_page_sum(),
                 running=PRINTERTHREAD.is_alive(),
-                success='Restarted printer thread.')
+                success='Cleared queue.')
