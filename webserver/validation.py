@@ -11,11 +11,11 @@ def validate_pdf(uploaded_file, CONFIG):
     secured_filename = secure_filename(uploaded_file.filename)
 
     if secured_filename == '':
-        return 'Bitte laden sie eine Datei hoch.'
+        return 'Bitte lad eine Datei hoch.'
 
     # check extension
     if os.path.splitext(secured_filename)[1] != '.pdf':
-        return 'Sie können nur PDF Dateien drucken.'
+        return 'Du kannst nur PDF Dateien drucken.'
 
     # check if file is really a pdf
     try:
@@ -31,7 +31,7 @@ def validate_pdf(uploaded_file, CONFIG):
 
     # check the number of pages
     if numpages > int(CONFIG['maxpdfsize']):
-        return 'Sie können nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seiten drucken.'
+        return 'Du kannst nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seiten drucken.'
 
     return 'ISVALID'
 

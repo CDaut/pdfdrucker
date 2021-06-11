@@ -103,8 +103,8 @@ def handle_post():
     return render_template('index.html', maxpdfsize=CONFIG['maxpdfsize'],
                            num_documents=PRINTERTHREAD.get_queue_size(),
                            num_pages=PRINTERTHREAD.get_page_sum(),
-                           success='Ihre Datei wird nun verarbeitet. '
-                                   + 'Bitte beachten sie, dass das Verarbeiten von großen '
+                           success='Deine Datei wird nun verarbeitet. '
+                                   + 'Bitte beachte, dass das Verarbeiten von großen '
                                    + 'PDFs unter Umständen mehrere Minuten dauern kann.')
 
 
