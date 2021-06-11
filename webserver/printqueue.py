@@ -83,7 +83,9 @@ class Printerthread(Thread):
             time.sleep(float(self.__config['status_fetch_sleep_interval']))
 
             # fetch job status
-            status = printjob.fetch_status()
+            status_tupel = printjob.fetch_status()
+            status = status_tupel[0]
+            message = status_tupel[1]
 
             # handle different job status codes where something needs to be done
             if status is JobStatus.COMPLETED:
@@ -95,7 +97,7 @@ class Printerthread(Thread):
                 self.__logger.error('Job %s by user %s errored!', jobid, printjob.username)
                 return  # return at this point because no smb share processing should be done
             elif status is JobStatus.UNKNOWN:
-                self.__logger.error('Received unknown status code')
+                self.__logger.error('Received unknown status code: ' + message)
 
         # get files in remote directory
         files = sftp.listdir(pdf_printer_dir_path)

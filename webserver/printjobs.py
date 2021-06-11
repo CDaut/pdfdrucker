@@ -1,4 +1,5 @@
 import socket
+import unicodedata
 
 from bs4 import BeautifulSoup
 from enum import Enum
@@ -38,7 +39,7 @@ class Printjob:
 
         # if no jobs are queued, printing was successful, because failed jobs will stay in the table
         if jobtable is None:
-            return JobStatus.COMPLETED
+            return JobStatus.COMPLETED, ''
 
         headers = [header.text.lower() for header in jobtable.find_all('th')]
         results = [{headers[i]: cell for i, cell in enumerate(row.find_all('td'))}
@@ -55,17 +56,17 @@ class Printjob:
             if int(jobid) == int(self.jobid):
                 state = row['state']
                 # extract the state information
-                rawstatus = state.text.split(" ")[0].replace('\n', '')
+                rawstatus = unicodedata.normalize('NFKC', state.text.replace('\n', '')).split(' ')[0]
 
                 if rawstatus == 'pending':
-                    return JobStatus.PENDING
+                    return JobStatus.PENDING, ''
                 elif rawstatus == 'stopped':
-                    return JobStatus.FAILED
+                    return JobStatus.FAILED, ''
                 elif rawstatus == 'processing':
-                    return JobStatus.PROCESSING
+                    return JobStatus.PROCESSING, ''
                 else:
-                    return JobStatus.UNKNOWN
+                    return JobStatus.UNKNOWN, '"' + rawstatus + '"'
 
         # if the print job is not listed in the table anymnore, it can be marked as completed
         if not job_found:
-            return JobStatus.COMPLETED
+            return JobStatus.COMPLETED, ''
