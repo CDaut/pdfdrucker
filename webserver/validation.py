@@ -23,8 +23,14 @@ def validate_pdf(uploaded_file, CONFIG):
     except PdfReadError:
         return 'Die PDF Datei kann nicht gelesen werden.'
 
+    # avoid the "NotImplementedError" by trying to get the page count
+    try:
+        numpages = pdfreader.numPages
+    except PdfReadError:
+        return 'Die Seitenzahl konnte nicht ermittelt werden (ist die Datei vielleicht verschlüsselt?).'
+
     # check the number of pages
-    if pdfreader.numPages > int(CONFIG['maxpdfsize']):
+    if numpages > int(CONFIG['maxpdfsize']):
         return 'Sie können nur PDFs mit maximal ' + CONFIG['maxpdfsize'] + ' Seiten drucken.'
 
     return 'ISVALID'
