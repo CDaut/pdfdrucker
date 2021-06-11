@@ -117,27 +117,33 @@ def index():
         return handle_get()
 
 
-# page for soft restarting the printer queue
-@app.route('/printerthread', methods=['GET', 'POST'])
-def printerthread():
+# page for clearing the printer queue
+@app.route('/printerqueue', methods=['GET', 'POST'])
+def printerqueue():
     # handle different methods differently
     if request.method == 'GET':
-        return render_template('printerthread.html', running=PRINTERTHREAD.is_alive())
+        return render_template(
+            'printerqueue.html',
+            running=PRINTERTHREAD.is_alive(),
+            numjobs=PRINTERTHREAD.get_queue_size(),
+            numpages=PRINTERTHREAD.get_page_sum()
+        )
     elif request.method == 'POST':
-        # check if the thread is already running so it cannot be started twice
-        if PRINTERTHREAD.is_alive():
-            return render_template('printerthread.html',
-                                   running=PRINTERTHREAD.is_alive(),
-                                   error='Daemon is already running.')
         # check if the password is correct
         if request.form['password'] != SECRETS['sftp_password']:
-            return render_template('printerthread.html',
-                                   running=PRINTERTHREAD.is_alive(),
-                                   error='Wrong password.')
+            return render_template(
+                'printerqueue.html',
+                running=PRINTERTHREAD.is_alive(),
+                numjobs=PRINTERTHREAD.get_queue_size(),
+                numpages=PRINTERTHREAD.get_page_sum(),
+                error='Wrong password.')
 
-        # restart thread if the password was correct
+        # clear the queue if the password was correct
         else:
-            PRINTERTHREAD.start()
-            return render_template('printerthread.html',
-                                   running=PRINTERTHREAD.is_alive(),
-                                   success='Restarted printer thread.')
+            PRINTERTHREAD.clear_queue()
+            return render_template(
+                'printerqueue.html',
+                numjobs=PRINTERTHREAD.get_queue_size(),
+                numpages=PRINTERTHREAD.get_page_sum(),
+                running=PRINTERTHREAD.is_alive(),
+                success='Restarted printer thread.')

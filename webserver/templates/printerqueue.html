@@ -26,13 +26,15 @@
     {% endif %}
     <div class="row mt-3">
         <p>Printer daemon running: {{ running }}</p>
+        <p>Current print jobs: {{ numjobs }}</p>
+        <p>Current page count: {{ numpages }}</p>
     </div>
     <div class="row mt-3">
-        <form action="/printerthread" method="post">
+        <form action="/printerqueue" method="post">
             <label>
                 Password:
                 <input type="password" class="form-control" name="password">
-                <button class="btn btn-danger mt-2">Restart Daemon</button>
+                <button class="btn btn-danger mt-2">Clear queue</button>
             </label>
         </form>
     </div>

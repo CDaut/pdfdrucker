@@ -136,6 +136,9 @@ class Printerthread(Thread):
     def get_queue_size(self):
         return len(self.__queue)
 
+    def clear_queue(self):
+        self.__queue = []
+
     def get_page_sum(self):
         pages = 0
 
