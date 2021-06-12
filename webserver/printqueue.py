@@ -5,12 +5,18 @@ import socket
 import ssl
 import subprocess
 import time
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from threading import Thread
 
 import paramiko
+from flask import render_template
 from paramiko.sftp_client import SFTPClient
 
 from printjobs import JobStatus
+import app
 
 
 class Printerthread(Thread):
@@ -135,6 +141,36 @@ class Printerthread(Thread):
         self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + 's printing queue.')
 
     def notify_queue_full(self):
+        self.__logger.info('Sending an email alert because the queue exceeded the threshhold...')
+
+        # create a new message
+        message = MIMEMultipart()
+        message['From'] = self.__config['from_address']
+        message['To'] = self.__config['to_address']
+        message['Subject'] = self.__config['email_subject']
+
+        # add message body
+        with app.get_context():
+            rendered = render_template(
+                'alert_email.html',
+                limit=self.__config['queue_alert_threshold'])
+
+        message.attach(MIMEText(rendered, 'html'))
+
+        # load and configure attatchment
+        with open('serverlog.log', 'rb') as logfile:
+            att = MIMEBase('application', 'octet-stream')
+            att.set_payload(logfile.read())
+
+        encoders.encode_base64(att)
+        att.add_header(
+            "Content-Disposition",
+            f"attachment; filename= serverlog.log",
+        )
+
+        # attatch log file
+        message.attach(att)
+
         # create security context
         context = ssl.create_default_context()
 
@@ -146,9 +182,8 @@ class Printerthread(Thread):
         ) as server:
             server.login(self.__config['from_address'], self.__secret['mail_password'])
 
-            # send the text specified in the email file
-            with open('alert_email.txt', 'r') as email_file:
-                server.sendmail(self.__config['from_address'], self.__config['to_address'], email_file.read())
+            # send the message
+            server.sendmail(self.__config['from_address'], self.__config['to_address'], message.as_string())
 
     def enqueue(self, printjob):
         self.__queue.append(printjob)

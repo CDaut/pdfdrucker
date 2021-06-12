@@ -13,3 +13,4 @@ to_address: pdfdrucker.abh@gmail.com # the email address that should be alerted
 from_address: pdfdrucker.abh@gmail.com # the printers email address
 smtp_port: 465 # the mailservers smtp port
 smtp_server_address: smtp.gmail.com # the mailservers address
+email_subject: PDF Drucker Warnung! # subject of the alert message that will be sent

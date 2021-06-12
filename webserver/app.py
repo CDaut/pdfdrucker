@@ -160,3 +160,7 @@ def printerqueue():
                 numpages=PRINTERTHREAD.get_page_sum(),
                 running=PRINTERTHREAD.is_alive(),
                 success='Cleared queue.')
+
+
+def get_context():
+    return app.app_context()

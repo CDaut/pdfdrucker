@@ -44,3 +44,4 @@ mail_password: <mail server password>
 - **from_address** Die E-Mail Adresse von der aus dieses Programm alle Benachrichtigungen verschickt
 - **smtp_port** Der Port des Ausgangsmailservers (nur SMTP wird unterstützt)
 - **smtp_server_address** Die Adresse des SMTP Ausgangsmailservers
+- **email_subject** Betreff der Warn E-Mail
