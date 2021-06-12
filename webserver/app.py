@@ -1,3 +1,4 @@
+import logging
 import os.path
 from os.path import join
 import time
@@ -11,6 +12,8 @@ from printqueue import Printerthread
 from printjobs import Printjob
 
 app = Flask(__name__)
+# set up the logger to log to this file
+logging.basicConfig(filename='serverlog.log', level=logging.DEBUG)
 
 global CONFIG
 global SECRETS
