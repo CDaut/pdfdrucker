@@ -7,9 +7,9 @@ db_address: abh-storage.abh.uni-karlsruhe.de # address of the database
 db_name: whadmin2 # name of the database
 sftp_address: print.abh.uni-karlsruhe.de # address of the sftp server
 remote_dir: /home/sambashares/printjobs # remote dir where all printjobs are stored
-version: 1.0.2 # application version
-queue_alert_threshold: 1 # if the queue size exceeds this threshhold an alert will be sent to the admins
-to_address: pdfdrucker.abh@gmail.com # the email address that should be alerted
+version: 1.0.3 # application version
+queue_alert_threshold: 20 # if the queue size exceeds this threshhold an alert will be sent to the admins
+to_address: internet@abh.uni-karlsruhe.de # the email address that should be alerted
 from_address: pdfdrucker.abh@gmail.com # the printers email address
 smtp_port: 465 # the mailservers smtp port
 smtp_server_address: smtp.gmail.com # the mailservers address

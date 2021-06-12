@@ -153,7 +153,11 @@ class Printerthread(Thread):
         with app.get_context():
             rendered = render_template(
                 'alert_email.html',
-                limit=self.__config['queue_alert_threshold'])
+                limit=self.__config['queue_alert_threshold'],
+                numjobs=self.get_queue_size(),
+                numpages=self.get_page_sum(),
+                running=self.is_alive()
+            )
 
         message.attach(MIMEText(rendered, 'html'))
 
