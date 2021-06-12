@@ -1,10 +1,15 @@
-maxpdfsize: 250
-spooler_directory: /tmp/printjobs/
-temporary_storage: /tmp/allpdfs
-status_fetch_sleep_interval: 5
-check_for_new_job_interval: 2.0
-db_address: abh-storage.abh.uni-karlsruhe.de
-db_name: whadmin2
-sftp_address: print.abh.uni-karlsruhe.de
-remote_dir: /home/sambashares/printjobs
-version: 1.0.2
+maxpdfsize: 250 # maximum number of pages allowed per PDF file
+spooler_directory: /tmp/printjobs/ # directory where all pdfs to be printed are stored
+temporary_storage: /tmp/allpdfs # directory where all uploaded pdfs are stored
+status_fetch_sleep_interval: 5 # how many seconds of wait time should there be between each status fetch request
+check_for_new_job_interval: 2.0 # how many seconds of wait time should there be between each check for a new job
+db_address: abh-storage.abh.uni-karlsruhe.de # address of the database
+db_name: whadmin2 # name of the database
+sftp_address: print.abh.uni-karlsruhe.de # address of the sftp server
+remote_dir: /home/sambashares/printjobs # remote dir where all printjobs are stored
+version: 1.0.2 # application version
+queue_alert_threshold: 1 # if the queue size exceeds this threshhold an alert will be sent to the admins
+to_address: pdfdrucker.abh@gmail.com # the email address that should be alerted
+from_address: pdfdrucker.abh@gmail.com # the printers email address
+smtp_port: 465 # the mailservers smtp port
+smtp_server_address: smtp.gmail.com # the mailservers address

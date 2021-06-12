@@ -1,6 +1,8 @@
 import os
 import re
+import smtplib
 import socket
+import ssl
 import subprocess
 import time
 from threading import Thread
@@ -28,6 +30,9 @@ class Printerthread(Thread):
             if len(self.__queue) == 0:
                 time.sleep(self.__config['check_for_new_job_interval'])
             else:
+                # check if the queue is getting filled up
+                if len(self.__queue) >= self.__config['queue_alert_threshold']:
+                    self.notify_queue_full()
                 self.handle_print_job()
 
     def handle_print_job(self):
@@ -128,6 +133,22 @@ class Printerthread(Thread):
         # use rename to move the file
         sftp.rename(postscript_file_path, newpath)
         self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + 's printing queue.')
+
+    def notify_queue_full(self):
+        # create security context
+        context = ssl.create_default_context()
+
+        # create secure smtp connection to the server and log in
+        with smtplib.SMTP_SSL(
+                self.__config['smtp_server_address'],
+                self.__config['smtp_port'],
+                context=context
+        ) as server:
+            server.login(self.__config['from_address'], self.__secret['mail_password'])
+
+            # send the text specified in the email file
+            with open('alert_email.txt', 'r') as email_file:
+                server.sendmail(self.__config['from_address'], self.__config['to_address'], email_file.read())
 
     def enqueue(self, printjob):
         self.__queue.append(printjob)
