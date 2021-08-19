@@ -15,13 +15,14 @@ class JobStatus(Enum):
 
 
 class Printjob:
-    def __init__(self, username, pdfpath, pages):
-        self.jobid = None
+    def __init__(self, username, pdfpath, pages, duplex):
         self.username = username
         self.pdfpath = pdfpath
         self.numpages = pages
+        self.duplex = duplex
         self.starttime = None
         self.completetime = None
+        self.jobid = None
 
     '''
     Method to get the print jobs status by fetching the HTML from cups and parsing it

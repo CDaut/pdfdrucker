@@ -1,5 +1,6 @@
 import logging
 import os.path
+from logging.handlers import RotatingFileHandler
 from os.path import join
 import time
 from shutil import move
@@ -13,7 +14,9 @@ from printjobs import Printjob
 
 app = Flask(__name__)
 # set up the logger to log to this file
-logging.basicConfig(filename='serverlog.log', level=logging.DEBUG)
+app.logger = logging.getLogger('werkzeug')
+app.logger.addHandler(RotatingFileHandler('serverlog.log', mode='a', ))
+app.logger.setLevel(logging.DEBUG)
 
 global CONFIG
 global SECRETS
@@ -105,8 +108,11 @@ def handle_post():
     newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
     move(filename, newpath)
 
+    # check if duplex is enabled
+    duplex = 'duplex' in request.form
+
     # create a new printjob and enqueue it
-    job = Printjob(username, newpath, num_pages)
+    job = Printjob(username, newpath, num_pages, duplex)
     PRINTERTHREAD.enqueue(job)
 
     # create log message
