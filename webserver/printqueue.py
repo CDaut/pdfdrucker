@@ -46,6 +46,7 @@ class Printerthread(Thread):
         # connect to smb share and clear directory to ensure a clean starting state
         # connect to remote server via sftp
         transport = paramiko.Transport((self.__config['sftp_address'], 22))
+        transport.banner_timeout = 60
         transport.connect(None, self.__secret['username'], self.__secret['sftp_password'])
 
         # create sftp connection
