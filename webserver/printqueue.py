@@ -76,9 +76,16 @@ class Printerthread(Thread):
         # save the start time
         printjob.starttime = time.time()
 
+        # construct lp command
+        if printjob.duplex:
+            cmd = 'lp -h ' + hostname + ':631 -d ABH -o sides=two-sided-long-edge ' + printjob.pdfpath
+        else:
+            cmd = 'lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath
+
+        self.__logger.info('lp command: ' + cmd)
+
         # call lp
-        from_stdout = str(subprocess.check_output('lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath,
-                                                  shell=True))
+        from_stdout = str(subprocess.check_output(cmd, shell=True))
         # extract the real printjob id
         jobid = re.search('(ABH-)([0-9]+)', from_stdout).group(2)
         # update the printjobs jobid
