@@ -9,6 +9,7 @@ services:
       - ./cupsserver:/home/print
       - /var/run/dbus:/var/run/dbus
     command: bash -c "/usr/sbin/cupsd && /home/print/addprinter.sh && tail -F YOU_CAN_IGNORE_THIS_ERROR"
+    restart: always
   web:
     depends_on:
       - cups
@@ -18,3 +19,4 @@ services:
     ports:
       - "8007:8000"
     command: flask run --host=0.0.0.0 --port=8000
+    restart: always
