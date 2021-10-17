@@ -79,10 +79,11 @@ def handle_post():
     unixtime = int(time.time())
     username = request.form['username']
     temppath = CONFIG['temporary_storage']
-    filename = join(temppath, username + '_' + str(unixtime) + '.pdf')
+    filename = username + '_' + str(unixtime)
+    pdftemppath = join(temppath, filename)
 
     # save the file
-    uploaded_file.save(filename)
+    uploaded_file.save(pdftemppath)
 
     # call the helper method to validate the pdf
     valid = validate_pdf(uploaded_file, CONFIG)
@@ -105,14 +106,20 @@ def handle_post():
 
     # move uploaded pdffile to our print spooler
     spooler_dir = CONFIG['spooler_directory']
-    newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
-    move(filename, newpath)
+    newpath = join(spooler_dir, filename + '.pdf')
+    move(pdftemppath, newpath)
 
     # check if duplex is enabled
     duplex = 'duplex' in request.form
 
+    # check if color is enabled
+    color = 'color' in request.form
+
+    # pagesize
+    pagesize = request.form.get('pagesize')
+
     # create a new printjob and enqueue it
-    job = Printjob(username, newpath, num_pages, duplex)
+    job = Printjob(username, filename, newpath, num_pages, duplex, color, pagesize)
     PRINTERTHREAD.enqueue(job)
 
     # create log message

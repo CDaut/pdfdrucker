@@ -52,22 +52,6 @@ class Printerthread(Thread):
         # create sftp connection
         sftp = SFTPClient.from_transport(transport)
 
-        pdf_printer_dir_path = os.path.join(self.__config['remote_dir'], 'pdfprinter')
-
-        # check if the remote printer dir even exists
-        if 'pdfprinter' not in sftp.listdir(self.__config['remote_dir']):
-            # create remote directory and set permissions
-            sftp.mkdir(pdf_printer_dir_path)
-            sftp.chmod(pdf_printer_dir_path, 0o777)
-
-        # list all files
-        files = sftp.listdir(pdf_printer_dir_path)
-
-        # delete all files
-        for file in files:
-            filepath = os.path.join(self.__config['remote_dir'], 'pdfprinter', file)
-            sftp.remove(filepath)
-
         printjob = self.get_first_job()
 
         # dispatch print job
@@ -78,11 +62,23 @@ class Printerthread(Thread):
         printjob.starttime = time.time()
 
         # construct lp command
-        if printjob.duplex:
-            cmd = 'lp -h ' + hostname + ':631 -d ABH -o sides=two-sided-long-edge ' + printjob.pdfpath
-        else:
-            cmd = 'lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath
+        cupsopts = ''
+        if os.environ['CUPS_PRINTER_MODEL_OPTION']:
+            cupsopts += ' ' + os.environ['CUPS_PRINTER_MODEL_OPTION']
 
+        if printjob.duplex:
+            cupsopts += ' ' + os.environ['CUPS_DUPLEX_OPTION']
+        else:
+            cupsopts += ' ' + os.environ['CUPS_SIMPLEX_OPTION']
+
+        if printjob.color:
+            cupsopts += ' ' + os.environ['CUPS_COLOR_OPTION']
+        else:
+            cupsopts += ' ' + os.environ['CUPS_GREYSCALE_OPTION']
+
+        cupsopts += ' -o PageSize=' + printjob.pagesize
+
+        cmd = 'lp -h ' + hostname + ':631 -d ' + os.environ['CUPS_PRINTER_NAME'] + cupsopts + ' ' + printjob.pdfpath
         self.__logger.info('lp command: ' + cmd)
 
         # call lp
@@ -119,10 +115,10 @@ class Printerthread(Thread):
                 self.__logger.error('Received unknown status code: ' + message)
 
         # get files in remote directory
-        files = sftp.listdir(pdf_printer_dir_path)
+        files = os.listdir('/print')
 
-        # throw an error if more than one file is present
-        if len(files) > 1:
+        # throw an error if more than tow files are present (.gitkeep and out.ps)
+        if len(files) > 2:
             self.__logger.error('More than two files are present. Aborting.')
             return
 
@@ -132,9 +128,10 @@ class Printerthread(Thread):
             return
 
         # move the file to the correct user directory
-        postscript_file_path = os.path.join(pdf_printer_dir_path, files[0])
+        postscript_file_path = '/print/out.ps'
 
-        newpath = os.path.join('/home/sambashares/printjobs', printjob.username, files[0])
+        filename = printjob.filename + '.ps'
+        newpath = os.path.join('/home/sambashares/printjobs', printjob.username, filename)
 
         # check if userdir exists
         userdirs = sftp.listdir('/home/sambashares/printjobs')
@@ -145,8 +142,8 @@ class Printerthread(Thread):
             sftp.chmod(os.path.join('/home/sambashares/printjobs', printjob.username), 0o777)
 
         # use rename to move the file
-        sftp.rename(postscript_file_path, newpath)
-        self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + 's printing queue.')
+        sftp.put(postscript_file_path, newpath)
+        self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + '\'s printing queue.')
 
     def notify_queue_full(self):
         self.__logger.info('Sending an email alert because the queue exceeded the threshhold...')

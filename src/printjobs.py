@@ -1,5 +1,6 @@
 import socket
 import unicodedata
+import os
 
 from bs4 import BeautifulSoup
 from enum import Enum
@@ -15,11 +16,14 @@ class JobStatus(Enum):
 
 
 class Printjob:
-    def __init__(self, username, pdfpath, pages, duplex):
+    def __init__(self, username, filename, pdfpath, pages, duplex, color, pagesize):
         self.username = username
+        self.filename = filename
         self.pdfpath = pdfpath
         self.numpages = pages
         self.duplex = duplex
+        self.color= color
+        self.pagesize = pagesize
         self.starttime = None
         self.completetime = None
         self.jobid = None
@@ -34,7 +38,7 @@ class Printjob:
         ip = socket.gethostbyname('cups')
 
         # make request and extract the table
-        result = requests.get("http://" + ip + ":631/printers/ABH")
+        result = requests.get("http://" + ip + ":631/printers/" + os.environ['CUPS_PRINTER_NAME'])
         parsed = BeautifulSoup(result.text, features='html.parser')
         jobtable = parsed.find("table", attrs={'summary': 'Job List'})
 
