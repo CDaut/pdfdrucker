@@ -118,8 +118,11 @@ def handle_post():
     # pagesize
     pagesize = request.form.get('pagesize')
 
+    # copies
+    copies = int(request.form.get('copies'))
+
     # create a new printjob and enqueue it
-    job = Printjob(username, filename, newpath, num_pages, duplex, color, pagesize)
+    job = Printjob(username, filename, newpath, num_pages, duplex, color, pagesize, copies)
     PRINTERTHREAD.enqueue(job)
 
     # create log message

@@ -62,7 +62,7 @@ class Printerthread(Thread):
         printjob.starttime = time.time()
 
         # construct lp command
-        cupsopts = ''
+        cupsopts = ' -o fit-to-page'
         if os.environ['CUPS_PRINTER_MODEL_OPTION']:
             cupsopts += ' ' + os.environ['CUPS_PRINTER_MODEL_OPTION']
 
@@ -76,6 +76,11 @@ class Printerthread(Thread):
         else:
             cupsopts += ' ' + os.environ['CUPS_GREYSCALE_OPTION']
 
+        if printjob.copies > 1:
+            cupsopts += ' ' + os.environ['CUPS_COPY_OPTION'] + ' ' + str(printjob.copies)
+        else:
+            printjob.copies = 1
+
         cupsopts += ' -o PageSize=' + printjob.pagesize
 
         cmd = 'lp -h ' + hostname + ':631 -d ' + os.environ['CUPS_PRINTER_NAME'] + cupsopts + ' ' + printjob.pdfpath
@@ -88,8 +93,8 @@ class Printerthread(Thread):
         # update the printjobs jobid
         printjob.jobid = jobid
 
-        self.__logger.info("Print job %s from user %s with %d pages has been dispatched.", printjob.jobid,
-                           printjob.username, printjob.numpages)
+        self.__logger.info("Print job %s from user %s with %d pages and %s copies has been dispatched.", printjob.jobid,
+                           printjob.username, printjob.numpages, printjob.copies)
 
         check_status = True
 

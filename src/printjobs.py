@@ -16,7 +16,7 @@ class JobStatus(Enum):
 
 
 class Printjob:
-    def __init__(self, username, filename, pdfpath, pages, duplex, color, pagesize):
+    def __init__(self, username, filename, pdfpath, pages, duplex, color, pagesize, copies):
         self.username = username
         self.filename = filename
         self.pdfpath = pdfpath
@@ -24,6 +24,7 @@ class Printjob:
         self.duplex = duplex
         self.color= color
         self.pagesize = pagesize
+        self.copies = copies
         self.starttime = None
         self.completetime = None
         self.jobid = None
