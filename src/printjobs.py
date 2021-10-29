@@ -12,7 +12,8 @@ class JobStatus(Enum):
     FAILED = 1
     PROCESSING = 2
     PENDING = 3
-    UNKNOWN = 4
+    HELD = 4
+    UNKNOWN = 5
 
 
 class Printjob:
@@ -70,6 +71,8 @@ class Printjob:
                     return JobStatus.FAILED, ''
                 elif rawstatus == 'processing':
                     return JobStatus.PROCESSING, ''
+                elif rawstatus == 'held':
+                    return JobStatus.HELD, ''
                 else:
                     return JobStatus.UNKNOWN, '"' + rawstatus + '"'
 

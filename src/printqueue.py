@@ -43,7 +43,6 @@ class Printerthread(Thread):
 
     def handle_print_job(self):
 
-        # connect to smb share and clear directory to ensure a clean starting state
         # connect to remote server via sftp
         transport = paramiko.Transport((self.__config['sftp_address'], 22))
         transport.banner_timeout = 60
@@ -62,27 +61,35 @@ class Printerthread(Thread):
         printjob.starttime = time.time()
 
         # construct lp command
-        cupsopts = ' -o fit-to-page'
+        # set pagesize option
+        cupsopts = ' -o PageSize=' + printjob.pagesize
+
+        # add resize to pagesize option
+        cupsopts += ' -o fit-to-page'
+
+        # set printer model
         if os.environ['CUPS_PRINTER_MODEL_OPTION']:
             cupsopts += ' ' + os.environ['CUPS_PRINTER_MODEL_OPTION']
 
+        # set duplex option
         if printjob.duplex:
             cupsopts += ' ' + os.environ['CUPS_DUPLEX_OPTION']
         else:
             cupsopts += ' ' + os.environ['CUPS_SIMPLEX_OPTION']
 
+        # set color option
         if printjob.color:
             cupsopts += ' ' + os.environ['CUPS_COLOR_OPTION']
         else:
             cupsopts += ' ' + os.environ['CUPS_GREYSCALE_OPTION']
 
+        # set number of copies
         if printjob.copies > 1:
             cupsopts += ' ' + os.environ['CUPS_COPY_OPTION'] + ' ' + str(printjob.copies)
         else:
             printjob.copies = 1
 
-        cupsopts += ' -o PageSize=' + printjob.pagesize
-
+        # construct full print command
         cmd = 'lp -h ' + hostname + ':631 -d ' + os.environ['CUPS_PRINTER_NAME'] + cupsopts + ' ' + printjob.pdfpath
         self.__logger.info('lp command: ' + cmd)
 
@@ -113,6 +120,9 @@ class Printerthread(Thread):
                 check_status = False
                 self.__logger.info('Completed compiling postscript for job %s by user %s within %d seconds.'
                                    '', jobid, printjob.username, printjob.completetime - printjob.starttime)
+            elif status is JobStatus.HELD:
+                self.__logger.error('Job %s by user %s was held with message: %s - queue is blocked! Check CUPS!'
+                                    '', jobid, printjob.username, message)
             elif status is JobStatus.FAILED:
                 self.__logger.error('Job %s by user %s errored!', jobid, printjob.username)
                 return  # return at this point because no smb share processing should be done
@@ -122,7 +132,7 @@ class Printerthread(Thread):
         # get files in remote directory
         files = os.listdir('/print')
 
-        # throw an error if more than tow files are present (.gitkeep and out.ps)
+        # throw an error if more than two files are present (.gitkeep and out.ps)
         if len(files) > 2:
             self.__logger.error('More than two files are present. Aborting.')
             return

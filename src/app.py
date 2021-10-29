@@ -4,11 +4,12 @@ from logging.handlers import RotatingFileHandler
 from os.path import join
 import time
 from shutil import move
+from werkzeug.utils import secure_filename
 
 from flask import Flask, render_template, request
 from yaml import YAMLError, safe_load
 
-from validation import validate_pdf, validate_user, get_number_of_pages
+from validation import get_orientation, validate_pdf, validate_user, get_number_of_pages
 from printqueue import Printerthread
 from printjobs import Printjob
 
@@ -74,6 +75,7 @@ def handle_post():
 
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
+    uploaded_filename = os.path.splitext(secure_filename(request.files['pdffile'].filename))[0]
 
     # save the file temporarily because PDFLoader might break it
     unixtime = int(time.time())
@@ -90,7 +92,7 @@ def handle_post():
 
     if not valid == 'ISVALID':
         # remove file from tempdir
-        os.remove(filename)
+        os.remove(pdftemppath)
 
         return render_template(
             'index.html',
@@ -102,11 +104,15 @@ def handle_post():
 
     # at this point we know that the uploaded file is a valid pdf file
 
+    # get number of pages
     num_pages = get_number_of_pages(uploaded_file)
+
+    # get orientation
+    orientation = get_orientation(uploaded_file)
 
     # move uploaded pdffile to our print spooler
     spooler_dir = CONFIG['spooler_directory']
-    newpath = join(spooler_dir, filename + '.pdf')
+    newpath = join(spooler_dir, uploaded_filename + '.pdf')
     move(pdftemppath, newpath)
 
     # check if duplex is enabled
@@ -122,7 +128,7 @@ def handle_post():
     copies = int(request.form.get('copies'))
 
     # create a new printjob and enqueue it
-    job = Printjob(username, filename, newpath, num_pages, duplex, color, pagesize, copies)
+    job = Printjob(username, uploaded_filename, newpath, num_pages, duplex, color, pagesize, copies)
     PRINTERTHREAD.enqueue(job)
 
     # create log message

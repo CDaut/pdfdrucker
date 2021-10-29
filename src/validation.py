@@ -11,7 +11,7 @@ def validate_pdf(uploaded_file, CONFIG):
     secured_filename = secure_filename(uploaded_file.filename)
 
     if secured_filename == '':
-        return 'Bitte lad eine Datei hoch.'
+        return 'Bitte lade eine Datei hoch.'
 
     # check extension
     if os.path.splitext(secured_filename)[1] != '.pdf':
@@ -39,6 +39,20 @@ def validate_pdf(uploaded_file, CONFIG):
 def get_number_of_pages(pdffile):
     return PdfFileReader(pdffile).numPages
 
+def get_orientation(pdffile):
+    page = PdfFileReader(pdffile).getPage(0).mediaBox
+    deg = PdfFileReader(pdffile).getPage(0).get('/Rotate')
+
+    if page.getUpperRight_x() - page.getUpperLeft_x() > page.getUpperRight_y() -page.getLowerRight_y():
+        if deg in [0,180,None]:
+            return 'landscape'
+        else:
+            return 'portrait'
+    else:
+        if deg in [0,180,None]:
+            return 'portrait'
+        else:
+            return 'landscape'
 
 def validate_user(formdata, CONFIG, secrets):
     username = formdata['username']
