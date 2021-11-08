@@ -341,4 +341,5 @@ tags
 *.pdf
 
 # secrets file
-webserver/secrets.yml
+secrets.yml
+src/secrets.yml

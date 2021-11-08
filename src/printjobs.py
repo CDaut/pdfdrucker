@@ -1,5 +1,6 @@
 import socket
 import unicodedata
+import os
 
 from bs4 import BeautifulSoup
 from enum import Enum
@@ -11,17 +12,23 @@ class JobStatus(Enum):
     FAILED = 1
     PROCESSING = 2
     PENDING = 3
-    UNKNOWN = 4
+    HELD = 4
+    UNKNOWN = 5
 
 
 class Printjob:
-    def __init__(self, username, pdfpath, pages):
-        self.jobid = None
+    def __init__(self, username, filename, pdfpath, pages, duplex, color, pagesize, copies):
         self.username = username
+        self.filename = filename
         self.pdfpath = pdfpath
         self.numpages = pages
+        self.duplex = duplex
+        self.color= color
+        self.pagesize = pagesize
+        self.copies = copies
         self.starttime = None
         self.completetime = None
+        self.jobid = None
 
     '''
     Method to get the print jobs status by fetching the HTML from cups and parsing it
@@ -33,7 +40,7 @@ class Printjob:
         ip = socket.gethostbyname('cups')
 
         # make request and extract the table
-        result = requests.get("http://" + ip + ":631/printers/ABH")
+        result = requests.get("http://" + ip + ":631/printers/" + os.environ['CUPS_PRINTER_NAME'])
         parsed = BeautifulSoup(result.text, features='html.parser')
         jobtable = parsed.find("table", attrs={'summary': 'Job List'})
 
@@ -64,6 +71,8 @@ class Printjob:
                     return JobStatus.FAILED, ''
                 elif rawstatus == 'processing':
                     return JobStatus.PROCESSING, ''
+                elif rawstatus == 'held':
+                    return JobStatus.HELD, ''
                 else:
                     return JobStatus.UNKNOWN, '"' + rawstatus + '"'
 

@@ -43,29 +43,13 @@ class Printerthread(Thread):
 
     def handle_print_job(self):
 
-        # connect to smb share and clear directory to ensure a clean starting state
         # connect to remote server via sftp
         transport = paramiko.Transport((self.__config['sftp_address'], 22))
+        transport.banner_timeout = 60
         transport.connect(None, self.__secret['username'], self.__secret['sftp_password'])
 
         # create sftp connection
         sftp = SFTPClient.from_transport(transport)
-
-        pdf_printer_dir_path = os.path.join(self.__config['remote_dir'], 'pdfprinter')
-
-        # check if the remote printer dir even exists
-        if 'pdfprinter' not in sftp.listdir(self.__config['remote_dir']):
-            # create remote directory and set permissions
-            sftp.mkdir(pdf_printer_dir_path)
-            sftp.chmod(pdf_printer_dir_path, 0o777)
-
-        # list all files
-        files = sftp.listdir(pdf_printer_dir_path)
-
-        # delete all files
-        for file in files:
-            filepath = os.path.join(self.__config['remote_dir'], 'pdfprinter', file)
-            sftp.remove(filepath)
 
         printjob = self.get_first_job()
 
@@ -76,16 +60,48 @@ class Printerthread(Thread):
         # save the start time
         printjob.starttime = time.time()
 
+        # construct lp command
+        # set pagesize option
+        cupsopts = ' -o PageSize=' + printjob.pagesize
+
+        # add resize to pagesize option
+        cupsopts += ' -o fit-to-page'
+
+        # set printer model
+        if os.environ['CUPS_PRINTER_MODEL_OPTION']:
+            cupsopts += ' ' + os.environ['CUPS_PRINTER_MODEL_OPTION']
+
+        # set duplex option
+        if printjob.duplex:
+            cupsopts += ' ' + os.environ['CUPS_DUPLEX_OPTION']
+        else:
+            cupsopts += ' ' + os.environ['CUPS_SIMPLEX_OPTION']
+
+        # set color option
+        if printjob.color:
+            cupsopts += ' ' + os.environ['CUPS_COLOR_OPTION']
+        else:
+            cupsopts += ' ' + os.environ['CUPS_GREYSCALE_OPTION']
+
+        # set number of copies
+        if printjob.copies > 1:
+            cupsopts += ' ' + os.environ['CUPS_COPY_OPTION'] + ' ' + str(printjob.copies)
+        else:
+            printjob.copies = 1
+
+        # construct full print command
+        cmd = 'lp -h ' + hostname + ':631 -d ' + os.environ['CUPS_PRINTER_NAME'] + cupsopts + ' ' + printjob.pdfpath
+        self.__logger.info('lp command: ' + cmd)
+
         # call lp
-        from_stdout = str(subprocess.check_output('lp -h ' + hostname + ':631 -d ABH ' + printjob.pdfpath,
-                                                  shell=True))
+        from_stdout = str(subprocess.check_output(cmd, shell=True))
         # extract the real printjob id
         jobid = re.search('(ABH-)([0-9]+)', from_stdout).group(2)
         # update the printjobs jobid
         printjob.jobid = jobid
 
-        self.__logger.info("Print job %s from user %s with %d pages has been dispatched.", printjob.jobid,
-                           printjob.username, printjob.numpages)
+        self.__logger.info("Print job %s from user %s with %d pages and %s copies has been dispatched.", printjob.jobid,
+                           printjob.username, printjob.numpages, printjob.copies)
 
         check_status = True
 
@@ -104,6 +120,9 @@ class Printerthread(Thread):
                 check_status = False
                 self.__logger.info('Completed compiling postscript for job %s by user %s within %d seconds.'
                                    '', jobid, printjob.username, printjob.completetime - printjob.starttime)
+            elif status is JobStatus.HELD:
+                self.__logger.error('Job %s by user %s was held with message: %s - queue is blocked! Check CUPS!'
+                                    '', jobid, printjob.username, message)
             elif status is JobStatus.FAILED:
                 self.__logger.error('Job %s by user %s errored!', jobid, printjob.username)
                 return  # return at this point because no smb share processing should be done
@@ -111,10 +130,10 @@ class Printerthread(Thread):
                 self.__logger.error('Received unknown status code: ' + message)
 
         # get files in remote directory
-        files = sftp.listdir(pdf_printer_dir_path)
+        files = os.listdir('/print')
 
-        # throw an error if more than one file is present
-        if len(files) > 1:
+        # throw an error if more than two files are present (.gitkeep and out.ps)
+        if len(files) > 2:
             self.__logger.error('More than two files are present. Aborting.')
             return
 
@@ -124,9 +143,10 @@ class Printerthread(Thread):
             return
 
         # move the file to the correct user directory
-        postscript_file_path = os.path.join(pdf_printer_dir_path, files[0])
+        postscript_file_path = '/print/out.ps'
 
-        newpath = os.path.join('/home/sambashares/printjobs', printjob.username, files[0])
+        filename = printjob.filename + '.ps'
+        newpath = os.path.join('/home/sambashares/printjobs', printjob.username, filename)
 
         # check if userdir exists
         userdirs = sftp.listdir('/home/sambashares/printjobs')
@@ -137,8 +157,8 @@ class Printerthread(Thread):
             sftp.chmod(os.path.join('/home/sambashares/printjobs', printjob.username), 0o777)
 
         # use rename to move the file
-        sftp.rename(postscript_file_path, newpath)
-        self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + 's printing queue.')
+        sftp.put(postscript_file_path, newpath)
+        self.__logger.info('Moved file ' + postscript_file_path + ' to ' + printjob.username + '\'s printing queue.')
 
     def notify_queue_full(self):
         self.__logger.info('Sending an email alert because the queue exceeded the threshhold...')

@@ -1,20 +1,28 @@
-version: '3.8'
-
+version: '3.9'
 services:
   cups:
-    build: ./cupsserver
-    ports:
-      - 631
+    image: cups:latest
+    build:
+      context: ./build/cups
+      dockerfile: Dockerfile
+    env_file: .env
     volumes:
-      - ./cupsserver:/home/print
+      - ./print:/print
       - /var/run/dbus:/var/run/dbus
-    command: bash -c "/usr/sbin/cupsd && /home/print/addprinter.sh && tail -F YOU_CAN_IGNORE_THIS_ERROR"
+    ports:
+      - "631:631"
+    restart: always
+
   web:
+    image: pdfprinter:latest
+    build:
+      context: ./
+      dockerfile: build/web/Dockerfile
+    env_file: .env
     depends_on:
       - cups
-    build: ./webserver
     volumes:
-      - ./webserver:/server
+      - ./print:/print
     ports:
-      - 8007:8000
-    command: flask run --host=0.0.0.0 --port=8000
+      - "8007:8000"
+    restart: always

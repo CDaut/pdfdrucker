@@ -1,19 +1,23 @@
 import logging
 import os.path
+from logging.handlers import RotatingFileHandler
 from os.path import join
 import time
 from shutil import move
+from werkzeug.utils import secure_filename
 
 from flask import Flask, render_template, request
 from yaml import YAMLError, safe_load
 
-from validation import validate_pdf, validate_user, get_number_of_pages
+from validation import get_orientation, validate_pdf, validate_user, get_number_of_pages
 from printqueue import Printerthread
 from printjobs import Printjob
 
 app = Flask(__name__)
 # set up the logger to log to this file
-logging.basicConfig(filename='serverlog.log', level=logging.DEBUG)
+app.logger = logging.getLogger('werkzeug')
+app.logger.addHandler(RotatingFileHandler('serverlog.log', mode='a', ))
+app.logger.setLevel(logging.DEBUG)
 
 global CONFIG
 global SECRETS
@@ -71,22 +75,24 @@ def handle_post():
 
     # get the uploaded file and validate filename
     uploaded_file = request.files['pdffile']
+    uploaded_filename = os.path.splitext(secure_filename(request.files['pdffile'].filename))[0]
 
     # save the file temporarily because PDFLoader might break it
     unixtime = int(time.time())
     username = request.form['username']
     temppath = CONFIG['temporary_storage']
-    filename = join(temppath, username + '_' + str(unixtime) + '.pdf')
+    filename = username + '_' + str(unixtime)
+    pdftemppath = join(temppath, filename)
 
     # save the file
-    uploaded_file.save(filename)
+    uploaded_file.save(pdftemppath)
 
     # call the helper method to validate the pdf
     valid = validate_pdf(uploaded_file, CONFIG)
 
     if not valid == 'ISVALID':
         # remove file from tempdir
-        os.remove(filename)
+        os.remove(pdftemppath)
 
         return render_template(
             'index.html',
@@ -98,15 +104,31 @@ def handle_post():
 
     # at this point we know that the uploaded file is a valid pdf file
 
+    # get number of pages
     num_pages = get_number_of_pages(uploaded_file)
+
+    # get orientation
+    orientation = get_orientation(uploaded_file)
 
     # move uploaded pdffile to our print spooler
     spooler_dir = CONFIG['spooler_directory']
-    newpath = join(spooler_dir, username + '_' + str(unixtime) + '.pdf')
-    move(filename, newpath)
+    newpath = join(spooler_dir, uploaded_filename + '.pdf')
+    move(pdftemppath, newpath)
+
+    # check if duplex is enabled
+    duplex = 'duplex' in request.form
+
+    # check if color is enabled
+    color = 'color' in request.form
+
+    # pagesize
+    pagesize = request.form.get('pagesize')
+
+    # copies
+    copies = int(request.form.get('copies'))
 
     # create a new printjob and enqueue it
-    job = Printjob(username, newpath, num_pages)
+    job = Printjob(username, uploaded_filename, newpath, num_pages, duplex, color, pagesize, copies)
     PRINTERTHREAD.enqueue(job)
 
     # create log message

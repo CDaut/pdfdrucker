@@ -3,9 +3,9 @@ spooler_directory: /tmp/printjobs/ # directory where all pdfs to be printed are 
 temporary_storage: /tmp/allpdfs # directory where all uploaded pdfs are stored
 status_fetch_sleep_interval: 5 # how many seconds of wait time should there be between each status fetch request
 check_for_new_job_interval: 2.0 # how many seconds of wait time should there be between each check for a new job
-db_address: abh-storage.abh.uni-karlsruhe.de # address of the database
+db_address: storage.abh.uni-karlsruhe.de # address of the database
 db_name: whadmin2 # name of the database
-sftp_address: print.abh.uni-karlsruhe.de # address of the sftp server
+sftp_address: storage.abh.uni-karlsruhe.de # address of the sftp server
 remote_dir: /home/sambashares/printjobs # remote dir where all printjobs are stored
 version: 1.0.3 # application version
 queue_alert_threshold: 20 # if the queue size exceeds this threshhold an alert will be sent to the admins
